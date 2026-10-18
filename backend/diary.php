@@ -35,7 +35,8 @@ function addDiaryEntry(PDO $pdo, array $user): void
     if ($movieId === null) {
         jsonResponse(false, 'A valid movie ID is required.', null, 422);
     }
-    if (!isValidDate($watchedDate)) {
+    // Allow one day ahead so users east of UTC can log tonight's film.
+    if (!isValidDate($watchedDate) || $watchedDate > date('Y-m-d', strtotime('+1 day'))) {
         jsonResponse(false, 'Choose a valid watched date.', null, 422);
     }
     if (!movieExists($pdo, $movieId)) {

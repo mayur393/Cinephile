@@ -33,7 +33,8 @@ async function initApp() {
 
 // Call a PHP endpoint and turn non-2xx or unsuccessful JSON into a readable error.
 async function api(path, options = {}) {
-  const response = await fetch(path, {credentials: 'same-origin', ...options});
+  // X-Requested-With is the CSRF check the PHP write endpoints require.
+  const response = await fetch(path, {credentials: 'same-origin', ...options, headers: {'X-Requested-With': 'fetch', ...options.headers}});
   let result;
   try { result = await response.json(); } catch (error) { throw new Error('The server returned an unreadable response.'); }
   if (!response.ok || !result.success) throw new Error(result.message || 'Something went wrong.');
@@ -233,7 +234,7 @@ function renderMovieDetail(container, movie, payload) {
   if (currentUser) {
     const ratingForm = document.createElement('form'); ratingForm.className = 'rating-form'; ratingForm.id = 'rating-form'; const label = document.createElement('label'); label.setAttribute('for', 'rating-select'); label.textContent = 'Your rating'; const select = document.createElement('select'); select.id = 'rating-select'; for (let number = 1; number <= 5; number += 1) { const option = document.createElement('option'); option.value = number; option.textContent = `${number} star${number === 1 ? '' : 's'}`; if (Number(payload.my_rating) === number) option.selected = true; select.appendChild(option); } const save = document.createElement('button'); save.className = 'button button-secondary'; save.type = 'submit'; save.textContent = payload.my_rating ? 'Update rating' : 'Rate this film'; ratingForm.append(label, select, save); ratingForm.addEventListener('submit', (event) => submitRating(event, movie.id)); actions.appendChild(ratingForm);
     const actionRow = document.createElement('div'); actionRow.className = 'action-row'; const watch = document.createElement('button'); watch.className = 'button button-secondary'; watch.id = 'watchlist-button'; watch.type = 'button'; watch.textContent = payload.in_watchlist ? 'Remove from watchlist' : 'Add to watchlist'; watch.addEventListener('click', () => toggleWatchlist(movie.id, Boolean(payload.in_watchlist))); actionRow.appendChild(watch); actions.appendChild(actionRow);
-    const diaryForm = document.createElement('form'); diaryForm.className = 'diary-inline'; diaryForm.id = 'diary-form'; const dateLabel = document.createElement('label'); dateLabel.textContent = 'Watched on'; const date = document.createElement('input'); date.type = 'date'; date.name = 'watched_date'; date.required = true; date.value = new Date().toISOString().slice(0, 10); const diaryButton = document.createElement('button'); diaryButton.className = 'button button-primary'; diaryButton.type = 'submit'; diaryButton.textContent = 'Add to diary'; dateLabel.appendChild(date); diaryForm.append(dateLabel, diaryButton); diaryForm.addEventListener('submit', (event) => submitDiary(event, movie.id)); actions.appendChild(diaryForm);
+    const diaryForm = document.createElement('form'); diaryForm.className = 'diary-inline'; diaryForm.id = 'diary-form'; const dateLabel = document.createElement('label'); dateLabel.textContent = 'Watched on'; const date = document.createElement('input'); date.type = 'date'; date.name = 'watched_date'; date.required = true; date.value = new Date().toLocaleDateString('en-CA'); date.max = date.value; const diaryButton = document.createElement('button'); diaryButton.className = 'button button-primary'; diaryButton.type = 'submit'; diaryButton.textContent = 'Add to diary'; dateLabel.appendChild(date); diaryForm.append(dateLabel, diaryButton); diaryForm.addEventListener('submit', (event) => submitDiary(event, movie.id)); actions.appendChild(diaryForm);
   } else {
     const note = document.createElement('p'); note.className = 'field-hint'; note.textContent = 'Log in to rate, review, save, or record this film.'; actions.appendChild(note); const link = document.createElement('a'); link.className = 'button button-primary'; link.href = 'login.html'; link.textContent = 'Log in to keep it'; actions.appendChild(link);
   }
@@ -326,19 +327,25 @@ function renderProfile(container, data) {
   const links = document.createElement('div'); links.className = 'profile-links'; const diaryLink = document.createElement('a'); diaryLink.className = 'button button-primary'; diaryLink.href = 'diary.html'; diaryLink.textContent = 'Open my diary'; const watchLink = document.createElement('a'); watchLink.className = 'button button-secondary'; watchLink.href = 'watchlist.html'; watchLink.textContent = 'Open my watchlist'; links.append(diaryLink, watchLink); container.append(header, statGrid, links);
 }
 
+// Only follow ?next= to one of our own pages, never an external or javascript: URL.
+function safeNextPage(fallback) {
+  const next = new URLSearchParams(window.location.search).get('next') || '';
+  return /^[a-z]+\.html(\?[\w=&%-]*)?$/.test(next) ? next : fallback;
+}
+
 // Attach registration and login validation to the matching form.
 function setupAuthPage(page) {
   const form = document.querySelector('form[data-auth]');
-  if (currentUser) { window.location.href = 'profile.html'; return; }
+  if (currentUser) { window.location.href = safeNextPage('profile.html'); return; }
   form.addEventListener('submit', (event) => handleAuth(event, page));
 }
 
 // Validate credentials in the browser, then let PHP repeat validation and create the session.
 async function handleAuth(event, page) {
   event.preventDefault(); const form = event.currentTarget; const message = document.getElementById('auth-message'); const data = Object.fromEntries(new FormData(form).entries());
-  if (page === 'register') { if (data.password.length < 8) { setFormMessage(message, 'Password must be at least 8 characters.'); return; } if (data.password !== data.confirm_password) { setFormMessage(message, 'The passwords do not match.'); return; } }
+  if (page === 'register') { if (data.password.length < 8 || data.password.length > 72) { setFormMessage(message, 'Password must be 8–72 characters.'); return; } if (data.password !== data.confirm_password) { setFormMessage(message, 'The passwords do not match.'); return; } }
   if (page === 'login' && (!data.login || !data.password)) { setFormMessage(message, 'Enter both fields to log in.'); return; }
-  try { const result = await api(`backend/auth.php?action=${page}`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)}); setFormMessage(message, result.message, true); const next = new URLSearchParams(window.location.search).get('next'); window.setTimeout(() => { window.location.href = next || (page === 'register' ? 'profile.html' : 'index.html'); }, 450); }
+  try { const result = await api(`backend/auth.php?action=${page}`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)}); setFormMessage(message, result.message, true); const next = safeNextPage(page === 'register' ? 'profile.html' : 'index.html'); window.setTimeout(() => { window.location.href = next; }, 450); }
   catch (error) { setFormMessage(message, error.message); }
 }
 
