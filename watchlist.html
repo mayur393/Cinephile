@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Cinephile Lite — a personal movie journal for films worth remembering.">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <title>My Watchlist — Cinephile Lite</title>
+</head>
+<body data-page="watchlist">
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="index.html" aria-label="Cinephile Lite home">
+        <span class="brand-mark" aria-hidden="true"><span></span></span>
+        <span class="brand-name">CINEPHILE <b>LITE</b></span>
+      </a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+      <nav id="site-nav" class="site-nav" aria-label="Primary navigation">
+        <a data-nav="home" href="index.html">Home</a>
+        <a data-nav="browse" href="movies.html">Browse</a>
+        <a data-nav="watchlist" href="watchlist.html" class="auth-only">Watchlist</a>
+        <a data-nav="diary" href="diary.html" class="auth-only">Diary</a>
+        <a data-nav="profile" href="profile.html" class="auth-only">Profile</a>
+        <a data-nav="login" href="login.html" class="guest-only nav-login">Log in</a>
+        <a data-nav="register" href="register.html" class="guest-only nav-cta">Sign up</a>
+        <button id="logout-button" class="auth-only nav-logout" type="button">Log out</button>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <section class="page-hero compact-hero"><div class="container"><p class="eyebrow">Saved for later</p><h1>My watchlist.</h1><p>A shelf for the films you want to meet when the time is right.</p></div></section>
+    <section class="section-block container"><div id="watchlist-message" class="message-box hidden" role="alert"></div><div id="watchlist-grid" class="movie-grid"><div class="loading-state">Loading your watchlist…</div></div></section>
+  </main>
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div>
+        <a class="brand footer-brand" href="index.html"><span class="brand-mark" aria-hidden="true"><span></span></span><span class="brand-name">CINEPHILE <b>LITE</b></span></a>
+        <p>Every film you watch, remembered.</p>
+      </div>
+      <p class="footer-note">A small college project for curious viewers.</p>
+    </div>
+  </footer>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="assets/js/app.js" defer></script>
+</body>
+</html>

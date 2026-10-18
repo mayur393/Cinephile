@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Cinephile Lite — a personal movie journal for films worth remembering.">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <title>Cinephile Lite — Every film you watch, remembered.</title>
+</head>
+<body data-page="home">
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="index.html" aria-label="Cinephile Lite home">
+        <span class="brand-mark" aria-hidden="true"><span></span></span>
+        <span class="brand-name">CINEPHILE <b>LITE</b></span>
+      </a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+      <nav id="site-nav" class="site-nav" aria-label="Primary navigation">
+        <a data-nav="home" href="index.html">Home</a>
+        <a data-nav="browse" href="movies.html">Browse</a>
+        <a data-nav="watchlist" href="watchlist.html" class="auth-only">Watchlist</a>
+        <a data-nav="diary" href="diary.html" class="auth-only">Diary</a>
+        <a data-nav="profile" href="profile.html" class="auth-only">Profile</a>
+        <a data-nav="login" href="login.html" class="guest-only nav-login">Log in</a>
+        <a data-nav="register" href="register.html" class="guest-only nav-cta">Sign up</a>
+        <button id="logout-button" class="auth-only nav-logout" type="button">Log out</button>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <section class="hero-section">
+      <div class="container hero-grid">
+        <div class="hero-copy reveal">
+          <p class="eyebrow">A personal film journal</p>
+          <h1>Find the next film worth <em>remembering.</em></h1>
+          <p class="hero-lede">Discover stories, keep your favorites close, and leave a note for the films that stay with you.</p>
+          <div class="hero-actions"><a class="button button-primary" href="movies.html">Explore the catalogue <span aria-hidden="true">↗</span></a><a class="text-link" href="register.html">Start your diary <span aria-hidden="true">→</span></a></div>
+          <div class="hero-facts"><span><strong>12</strong> starter films</span><span><strong>01</strong> quiet journal</span><span><strong>∞</strong> memories</span></div>
+        </div>
+        <div class="hero-art" aria-label="A cinematic poster collage">
+          <div class="hero-poster poster-poster poster-interstellar"><span>INTERSTELLAR</span><small>the stars are calling</small></div>
+          <div class="hero-poster poster-poster poster-dune"><span>DUNE</span><small>dreams are messages</small></div>
+          <div class="hero-reel"><span>FRAME 01</span><span>◌</span><span>FRAME 24</span></div>
+        </div>
+      </div>
+    </section>
+    <section class="section-block container" aria-labelledby="featured-title">
+      <div class="section-heading"><div><p class="eyebrow">A place to begin</p><h2 id="featured-title">Featured tonight</h2></div><a class="text-link" href="movies.html">See all films <span aria-hidden="true">→</span></a></div>
+      <div id="featured-movies" class="movie-grid compact-grid"><div class="loading-state">Loading a few favorites…</div></div>
+    </section>
+    <section class="quote-band"><div class="container quote-inner"><span class="quote-mark">“</span><blockquote>A film is never really finished. It keeps unfolding in the person who remembers it.</blockquote><span class="quote-rule"></span></div></section>
+    <section class="section-block container" aria-labelledby="popular-title">
+      <div class="section-heading"><div><p class="eyebrow">For your next watch</p><h2 id="popular-title">Start with a classic</h2></div><span class="section-caption">Curated from the starter catalogue</span></div>
+      <div id="popular-movies" class="movie-grid"><div class="loading-state">Finding your next watch…</div></div>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div>
+        <a class="brand footer-brand" href="index.html"><span class="brand-mark" aria-hidden="true"><span></span></span><span class="brand-name">CINEPHILE <b>LITE</b></span></a>
+        <p>Every film you watch, remembered.</p>
+      </div>
+      <p class="footer-note">A small college project for curious viewers.</p>
+    </div>
+  </footer>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="assets/js/app.js" defer></script>
+</body>
+</html>

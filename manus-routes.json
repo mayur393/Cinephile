@@ -1,0 +1,13 @@
+{
+  "routes": [
+    {"path":"/","title":"Cinephile Lite — Home"},
+    {"path":"/index.html","title":"Cinephile Lite — Home"},
+    {"path":"/movies.html","title":"Browse Movies — Cinephile Lite"},
+    {"path":"/movie.html","title":"Movie Details — Cinephile Lite"},
+    {"path":"/login.html","title":"Log In — Cinephile Lite"},
+    {"path":"/register.html","title":"Sign Up — Cinephile Lite"},
+    {"path":"/watchlist.html","title":"My Watchlist — Cinephile Lite"},
+    {"path":"/diary.html","title":"My Movie Diary — Cinephile Lite"},
+    {"path":"/profile.html","title":"My Profile — Cinephile Lite"}
+  ]
+}

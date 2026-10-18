@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Cinephile Lite — a personal movie journal for films worth remembering.">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <title>Sign Up — Cinephile Lite</title>
+</head>
+<body data-page="register">
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="index.html" aria-label="Cinephile Lite home">
+        <span class="brand-mark" aria-hidden="true"><span></span></span>
+        <span class="brand-name">CINEPHILE <b>LITE</b></span>
+      </a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+      <nav id="site-nav" class="site-nav" aria-label="Primary navigation">
+        <a data-nav="home" href="index.html">Home</a>
+        <a data-nav="browse" href="movies.html">Browse</a>
+        <a data-nav="watchlist" href="watchlist.html" class="auth-only">Watchlist</a>
+        <a data-nav="diary" href="diary.html" class="auth-only">Diary</a>
+        <a data-nav="profile" href="profile.html" class="auth-only">Profile</a>
+        <a data-nav="login" href="login.html" class="guest-only nav-login">Log in</a>
+        <a data-nav="register" href="register.html" class="guest-only nav-cta">Sign up</a>
+        <button id="logout-button" class="auth-only nav-logout" type="button">Log out</button>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <section class="auth-page"><div class="auth-card"><p class="eyebrow">Make it personal</p><h1>Keep your reel.</h1><p class="auth-intro">Create a free account to save films and write down what they mean to you.</p><form id="register-form" data-auth="register" novalidate><label for="register-username">Username</label><input id="register-username" name="username" type="text" autocomplete="username" required><span class="field-hint">3–40 letters, numbers, or underscores</span><label for="register-email">Email</label><input id="register-email" name="email" type="email" autocomplete="email" required><label for="register-password">Password</label><input id="register-password" name="password" type="password" autocomplete="new-password" required><span class="field-hint">At least 8 characters</span><label for="register-confirm">Confirm password</label><input id="register-confirm" name="confirm_password" type="password" autocomplete="new-password" required><button class="button button-primary button-wide" type="submit">Create my journal <span aria-hidden="true">→</span></button><div id="auth-message" class="form-message" role="alert"></div></form><p class="auth-switch">Already have a journal? <a href="login.html">Log in</a></p></div></section>
+  </main>
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div>
+        <a class="brand footer-brand" href="index.html"><span class="brand-mark" aria-hidden="true"><span></span></span><span class="brand-name">CINEPHILE <b>LITE</b></span></a>
+        <p>Every film you watch, remembered.</p>
+      </div>
+      <p class="footer-note">A small college project for curious viewers.</p>
+    </div>
+  </footer>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="assets/js/app.js" defer></script>
+</body>
+</html>
