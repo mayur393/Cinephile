@@ -22,10 +22,32 @@ function jsonResponse(bool $success, string $message = '', mixed $data = null, i
 }
 
 /**
+ * Return a JSON 500 instead of an empty page when an unexpected error (e.g. a PDO exception) escapes an endpoint.
+ */
+set_exception_handler(function (Throwable $exception): void {
+    error_log('Cinephile unhandled error: ' . $exception->getMessage());
+    jsonResponse(false, 'Something went wrong on the server. Please try again.', null, 500);
+});
+
+/**
+ * Block CSRF: writes must be POST and carry the X-Requested-With header that only same-origin fetch() can send.
+ */
+function requireWriteRequest(): void
+{
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+        jsonResponse(false, 'This action requires a POST request.', null, 405);
+    }
+    if (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'fetch') {
+        jsonResponse(false, 'Request blocked. Please use the Cinephile pages.', null, 403);
+    }
+}
+
+/**
  * Read JSON input for POST requests, with form data as a beginner-friendly fallback.
  */
 function requestData(): array
 {
+    requireWriteRequest();
     $rawBody = file_get_contents('php://input');
     $decoded = json_decode($rawBody ?: '', true);
     return is_array($decoded) ? $decoded : $_POST;

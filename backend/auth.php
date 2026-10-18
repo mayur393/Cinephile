@@ -13,6 +13,8 @@ function startUserSession(): void
 
     $forwardedProtocol = strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? ''));
     $isSecureRequest = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $forwardedProtocol === 'https' || getenv('CINEPHILE_PREVIEW') === '1';
+    // Strict mode refuses session IDs the server never issued.
+    ini_set('session.use_strict_mode', '1');
     session_name('cinephile_session');
     session_set_cookie_params([
         'lifetime' => 0,
@@ -97,6 +99,7 @@ function handleAuthRequest(): void
     }
 
     if ($action === 'logout') {
+        requireWriteRequest();
         startUserSession();
         $_SESSION = [];
         if (ini_get('session.use_cookies')) {
@@ -121,8 +124,9 @@ function handleAuthRequest(): void
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             jsonResponse(false, 'Enter a valid email address.', null, 422);
         }
-        if (strlen($password) < 8) {
-            jsonResponse(false, 'Password must be at least 8 characters.', null, 422);
+        // bcrypt silently ignores bytes after 72, so reject longer passwords instead of truncating them.
+        if (strlen($password) < 8 || strlen($password) > 72) {
+            jsonResponse(false, 'Password must be 8–72 characters.', null, 422);
         }
 
         $duplicate = $pdo->prepare('SELECT username, email FROM users WHERE username = ? OR email = ? LIMIT 1');
@@ -134,7 +138,15 @@ function handleAuthRequest(): void
         }
 
         $insert = $pdo->prepare('INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)');
-        $insert->execute([$username, $email, password_hash($password, PASSWORD_DEFAULT)]);
+        try {
+            $insert->execute([$username, $email, password_hash($password, PASSWORD_DEFAULT)]);
+        } catch (PDOException $exception) {
+            // Two sign-ups racing past the duplicate check still hit the UNIQUE keys.
+            if ($exception->getCode() === '23000') {
+                jsonResponse(false, 'That username or email is already registered. Try logging in instead.', null, 409);
+            }
+            throw $exception;
+        }
         $user = ['id' => (int) $pdo->lastInsertId(), 'username' => $username, 'email' => $email];
         saveSessionUser($user);
         jsonResponse(true, 'Account created. Your film journal is ready.', ['user' => $user], 201);
