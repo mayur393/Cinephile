@@ -20,3 +20,4 @@ assets/posters/*
 # AI Agent Skills (symlinks to master catalog)
 .agents/skills/
 .claude/skills/
+node_modules/
