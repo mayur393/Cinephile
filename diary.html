@@ -1,46 +1,115 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Cinephile Lite — a personal movie journal for films worth remembering.">
-  <link rel="stylesheet" href="assets/css/style.css">
-  <title>My Movie Diary — Cinephile Lite</title>
+  <title>Diary - Cinephile Lite</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
-<body data-page="diary">
-  <header class="site-header">
-    <div class="container nav-wrap">
-      <a class="brand" href="index.html" aria-label="Cinephile Lite home">
-        <span class="brand-mark" aria-hidden="true"><span></span></span>
-        <span class="brand-name">CINEPHILE <b>LITE</b></span>
-      </a>
-      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
-      <nav id="site-nav" class="site-nav" aria-label="Primary navigation">
-        <a data-nav="home" href="index.html">Home</a>
-        <a data-nav="browse" href="movies.html">Browse</a>
-        <a data-nav="watchlist" href="watchlist.html" class="auth-only">Watchlist</a>
-        <a data-nav="diary" href="diary.html" class="auth-only">Diary</a>
-        <a data-nav="profile" href="profile.html" class="auth-only">Profile</a>
-        <a data-nav="login" href="login.html" class="guest-only nav-login">Log in</a>
-        <a data-nav="register" href="register.html" class="guest-only nav-cta">Sign up</a>
-        <button id="logout-button" class="auth-only nav-logout" type="button">Log out</button>
-      </nav>
-    </div>
+<body>
+  <!-- Sticky top bar with links to the 3 pages -->
+  <header>
+    <nav><strong>🎬 Cinephile Lite</strong><a href="index.html">Home</a><a class="active" href="diary.html">Diary</a><a href="watchlist.html">Watchlist</a></nav>
   </header>
   <main>
-    <section class="page-hero compact-hero"><div class="container"><p class="eyebrow">A record of the moments</p><h1>My movie diary.</h1><p>Keep the date, the title, and the little feeling that came after.</p></div></section>
-    <section class="section-block container"><div id="diary-message" class="message-box hidden" role="alert"></div><div id="diary-list" class="diary-list"><div class="loading-state">Loading your diary…</div></div></section>
+    <h1>Movie Diary</h1>
+    <!-- Form card: used for both Add and Edit -->
+    <section>
+      <form id="form">
+        <input id="title" placeholder="Movie title" required maxlength="200">
+        <input id="date" type="date" required>
+        <input id="rating" type="number" min="1" max="5" placeholder="Rating (1-5)" required>
+        <textarea id="review" placeholder="Short review"></textarea>
+        <input id="poster" placeholder="Poster image URL (optional)">
+        <button>Save</button>
+        <span class="error" id="error"></span>
+      </form>
+    </section>
+    <!-- The saved movies are drawn here as poster cards -->
+    <section class="cards" id="list"></section>
   </main>
-  <footer class="site-footer">
-    <div class="container footer-inner">
-      <div>
-        <a class="brand footer-brand" href="index.html"><span class="brand-mark" aria-hidden="true"><span></span></span><span class="brand-name">CINEPHILE <b>LITE</b></span></a>
-        <p>Every film you watch, remembered.</p>
-      </div>
-      <p class="footer-note">A small college project for curious viewers.</p>
-    </div>
-  </footer>
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="assets/js/app.js" defer></script>
+  <footer>Web Technology Lab Project</footer>
+  <script>
+    const list = document.getElementById('list');
+    const error = document.getElementById('error');
+    const MIN_RATING = 1, MAX_RATING = 5;
+    let editId = null; // null = adding, a number = editing that movie
+
+    // Gets a form field by id.
+    const field = (id) => document.getElementById(id);
+
+    // Makes the poster box. It always shows 🎬; the image covers it, and is removed if the link is broken.
+    function makePoster(url) {
+      const box = document.createElement('div');
+      box.className = 'poster';
+      box.textContent = '🎬';
+      if (url) {
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = '';
+        img.onerror = () => img.remove(); // broken link -> the 🎬 shows
+        box.append(img);
+      }
+      return box;
+    }
+
+    // Asks the server for all diary rows and draws one card for each.
+    async function load() {
+      const res = await fetch('/api/diary');
+      const movies = await res.json();
+      list.textContent = ''; // clear old cards
+      movies.forEach((m) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        const name = document.createElement('h3');
+        name.textContent = m.title;
+        const stars = document.createElement('div');
+        stars.className = 'stars';
+        stars.textContent = '★'.repeat(m.rating) + '☆'.repeat(MAX_RATING - m.rating);
+        const date = document.createElement('div');
+        date.className = 'muted';
+        date.textContent = m.watched_date;
+        const review = document.createElement('p');
+        review.textContent = m.review;
+        const edit = document.createElement('button');
+        edit.textContent = 'Edit';
+        // Edit button: copy the movie into the form; Save will then send a PUT
+        edit.addEventListener('click', () => {
+          field('title').value = m.title;
+          field('date').value = m.watched_date;
+          field('rating').value = m.rating;
+          field('review').value = m.review;
+          field('poster').value = m.poster_url;
+          editId = m.id;
+          window.scrollTo(0, 0);
+        });
+        const del = document.createElement('button');
+        del.textContent = 'Delete';
+        // Delete button: DELETE request, then redraw
+        del.addEventListener('click', async () => {
+          await fetch('/api/diary/' + m.id, { method: 'DELETE' });
+          load();
+        });
+        card.append(makePoster(m.poster_url), name, stars, date, review, edit, del);
+        list.append(card);
+      });
+    }
+
+    // When the form is sent: check the rating, then POST (add) or PUT (edit).
+    field('form').addEventListener('submit', async (e) => {
+      e.preventDefault(); // stop the page reload
+      const rating = Number(field('rating').value);
+      if (rating < MIN_RATING || rating > MAX_RATING) { error.textContent = 'Rating must be 1 to 5'; return; }
+      const movie = { title: field('title').value.trim(), watched_date: field('date').value, rating,
+        review: field('review').value, poster_url: field('poster').value };
+      const url = editId ? '/api/diary/' + editId : '/api/diary';
+      const res = await fetch(url, { method: editId ? 'PUT' : 'POST', body: JSON.stringify(movie) });
+      error.textContent = res.ok ? '' : 'Could not save';
+      if (res.ok) { e.target.reset(); editId = null; }
+      load();
+    });
+    load();
+  </script>
 </body>
 </html>
