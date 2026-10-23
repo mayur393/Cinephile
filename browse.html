@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Browse Movies – Cinephile Lite</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <strong>🎬 Cinephile Lite</strong>
+      <a href="dashboard.html">Dashboard</a>
+      <a class="active" href="browse.html">Browse</a>
+      <a href="diary.html">Movie Diary</a>
+      <a href="watchlist.html">Watchlist</a>
+      <a class="btn-outline btn-sm" href="index.html">Logout</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1 style="margin-bottom: 8px;">Browse & Search Movies</h1>
+    <p class="muted" style="margin-bottom: 20px;">Search millions of movies via TMDB, add them to your watchlist, or log your personal reviews.</p>
+
+    <!-- Search Bar -->
+    <form id="search-form" class="search-bar">
+      <input id="query" placeholder="Type movie name (e.g. Inception, Avatar, Batman)..." required>
+      <button type="submit">Search</button>
+    </form>
+
+    <p id="status-msg" style="margin-bottom: 16px; font-weight: 500;"></p>
+
+    <!-- Results Grid -->
+    <section class="grid" id="results"></section>
+  </main>
+
+  <footer>Web Technology Lab Project</footer>
+
+  <script>
+    const results = document.getElementById('results');
+    const statusMsg = document.getElementById('status-msg');
+
+    // Poster box helper with fallback
+    function makePoster(url, title) {
+      const box = document.createElement('div');
+      box.className = 'poster';
+      const fallback = document.createElement('div');
+      fallback.className = 'poster-fallback';
+      fallback.innerHTML = `<span>🎬</span><strong class="fallback-title">${title || 'Movie'}</strong>`;
+      box.append(fallback);
+
+      if (url && url.trim()) {
+        const img = document.createElement('img');
+        img.referrerPolicy = 'no-referrer';
+        img.src = url.trim();
+        img.onload = () => { fallback.style.display = 'none'; };
+        img.onerror = () => { img.remove(); fallback.style.display = 'flex'; };
+        box.append(img);
+      }
+      return box;
+    }
+
+    // Search TMDB via Node backend
+    document.getElementById('search-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const query = document.getElementById('query').value.trim();
+      if (!query) return;
+
+      statusMsg.textContent = 'Searching TMDB for "' + query + '"...';
+      statusMsg.className = 'muted';
+      results.innerHTML = '';
+
+      try {
+        const res = await fetch('/api/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          statusMsg.textContent = '⚠️ ' + (data.error || 'Search failed');
+          statusMsg.className = 'error';
+          return;
+        }
+
+        if (data.length === 0) {
+          statusMsg.textContent = 'No movies found for "' + query + '". Try another title.';
+          return;
+        }
+
+        statusMsg.textContent = `Found ${data.length} movies for "${query}":`;
+        renderMovies(data);
+      } catch (err) {
+        statusMsg.textContent = '⚠️ Could not connect to backend server.';
+        statusMsg.className = 'error';
+      }
+    };
+
+    // Draw result cards
+    function renderMovies(movies) {
+      results.innerHTML = '';
+      movies.forEach(m => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        const body = document.createElement('div');
+        body.className = 'card-body';
+
+        const title = document.createElement('h3');
+        title.textContent = m.title;
+
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.textContent = 'Year: ' + m.release_year;
+
+        const overview = document.createElement('p');
+        overview.className = 'muted';
+        overview.textContent = m.overview.length > 130 ? m.overview.slice(0, 130) + '...' : m.overview;
+
+        // Action buttons
+        const acts = document.createElement('div');
+        acts.className = 'card-actions';
+
+        const watchBtn = document.createElement('button');
+        watchBtn.className = 'btn-outline btn-sm';
+        watchBtn.textContent = '+ Watchlist';
+        watchBtn.onclick = async () => {
+          const res = await fetch('/api/watchlist', {
+            method: 'POST',
+            body: JSON.stringify({
+              tmdb_id: m.tmdb_id,
+              title: m.title,
+              poster_url: m.poster_url,
+              genre: m.release_year,
+              description: m.overview
+            })
+          });
+          const resData = await res.json();
+          if (res.ok) {
+            watchBtn.textContent = '✓ In Watchlist';
+            watchBtn.disabled = true;
+          } else {
+            alert(resData.error || 'Could not add to watchlist');
+          }
+        };
+
+        const logToggleBtn = document.createElement('button');
+        logToggleBtn.className = 'btn-sm';
+        logToggleBtn.textContent = '✓ Watched';
+
+        // Quick log inline box
+        const logBox = document.createElement('div');
+        logBox.className = 'quick-log-box';
+        logBox.innerHTML = `
+          <input type="date" value="${new Date().toISOString().split('T')[0]}" required>
+          <select required>
+            <option value="5">★★★★★ (5 Stars)</option>
+            <option value="4">★★★★☆ (4 Stars)</option>
+            <option value="3">★★★☆☆ (3 Stars)</option>
+            <option value="2">★★☆☆☆ (2 Stars)</option>
+            <option value="1">★☆☆☆☆ (1 Star)</option>
+          </select>
+          <textarea placeholder="Write short review..."></textarea>
+          <button type="button" class="btn-sm">Save to Diary</button>
+        `;
+
+        logToggleBtn.onclick = () => {
+          logBox.style.display = logBox.style.display === 'flex' ? 'none' : 'flex';
+        };
+
+        const saveLogBtn = logBox.querySelector('button');
+        saveLogBtn.onclick = async () => {
+          const dateVal = logBox.querySelector('input').value;
+          const ratingVal = logBox.querySelector('select').value;
+          const reviewVal = logBox.querySelector('textarea').value;
+
+          const res = await fetch('/api/diary', {
+            method: 'POST',
+            body: JSON.stringify({
+              tmdb_id: m.tmdb_id,
+              title: m.title,
+              watched_date: dateVal,
+              rating: ratingVal,
+              review: reviewVal,
+              poster_url: m.poster_url
+            })
+          });
+          const resData = await res.json();
+          if (res.ok) {
+            logBox.innerHTML = '<span style="color:#16a34a; font-weight:600;">✓ Added to Movie Diary!</span>';
+            logToggleBtn.disabled = true;
+          } else {
+            alert(resData.error || 'Could not log movie');
+          }
+        };
+
+        acts.append(watchBtn, logToggleBtn);
+        body.append(title, badge, overview, acts, logBox);
+        card.append(makePoster(m.poster_url, m.title), body);
+        results.append(card);
+      });
+    }
+  </script>
+</body>
+</html>

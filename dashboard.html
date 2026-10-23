@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Dashboard – Cinephile Lite</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <strong>🎬 Cinephile Lite</strong>
+      <a class="active" href="dashboard.html">Dashboard</a>
+      <a href="browse.html">Browse</a>
+      <a href="diary.html">Movie Diary</a>
+      <a href="watchlist.html">Watchlist</a>
+      <a class="btn-outline btn-sm" href="index.html">Logout</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" style="text-align: left; padding: 10px 0;">
+      <h1>Welcome to your Dashboard! 👋</h1>
+      <p>Here is an overview of your personal movie collection from MySQL.</p>
+    </section>
+
+    <!-- Statistics Overview -->
+    <section class="stats-row">
+      <div class="stat-box">
+        <h2 id="diary-count">0</h2>
+        <p>Total Movies Watched</p>
+      </div>
+      <div class="stat-box">
+        <h2 id="watch-count">0</h2>
+        <p>Movies in Watchlist</p>
+      </div>
+    </section>
+
+    <!-- Shortcuts -->
+    <section class="shortcuts" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
+      <div class="shortcut">
+        <div>
+          <h3>Browse Movies</h3>
+          <p class="muted">Search millions of films on TMDB, view posters, and add them directly.</p>
+        </div>
+        <a class="btn" href="browse.html">Search TMDB &rarr;</a>
+      </div>
+      <div class="shortcut">
+        <div>
+          <h3>Movie Diary</h3>
+          <p class="muted">Log what you watched, give ratings 1–5, and write personal reviews.</p>
+        </div>
+        <a class="btn btn-outline" href="diary.html">Open Diary &rarr;</a>
+      </div>
+      <div class="shortcut">
+        <div>
+          <h3>Watchlist</h3>
+          <p class="muted">Keep a wishlist of films you plan to see, organized by genre.</p>
+        </div>
+        <a class="btn btn-outline" href="watchlist.html">Open Watchlist &rarr;</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>Web Technology Lab Project</footer>
+
+  <script>
+    // Fetch live statistics from MySQL via Node http backend
+    async function loadStats() {
+      const res = await fetch('/api/stats');
+      const data = await res.json();
+      document.getElementById('diary-count').textContent = data.totalDiary;
+      document.getElementById('watch-count').textContent = data.totalWatchlist;
+    }
+    loadStats();
+  </script>
+</body>
+</html>

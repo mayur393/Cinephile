@@ -3,23 +3,95 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Cinephile Lite</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <meta name="referrer" content="no-referrer">
+  <title>Cinephile Lite – My Movie Diary</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Sticky top bar with links to the 3 pages -->
   <header>
-    <nav><strong>🎬 Cinephile Lite</strong><a class="active" href="index.html">Home</a><a href="diary.html">Diary</a><a href="watchlist.html">Watchlist</a></nav>
+    <nav><strong>🎬 Cinephile Lite</strong><a class="active" href="index.html">Home</a></nav>
   </header>
-  <!-- Hero: big headline, one line of text, two buttons -->
+
   <main>
     <section class="hero">
-      <h1>My Movie Diary</h1>
-      <p>Log what you watched, rate it, and plan what to watch next.</p>
-      <a class="btn" href="diary.html">Open Diary</a> <a class="btn" href="watchlist.html">Open Watchlist</a>
+      <h1>Cinephile Lite – My Movie Diary</h1>
+      <p>Log movies you watched, give personal ratings, and save movies to your watchlist.</p>
     </section>
+
+    <!-- Demo Login / Register Box -->
+    <div class="auth-box">
+      <div class="auth-tabs">
+        <button class="tab-btn active" id="tab-log" onclick="setTab('login')">Login</button>
+        <button class="tab-btn" id="tab-reg" onclick="setTab('reg')">Create Account</button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="form-login">
+        <div class="demo-tag">
+          Demo: <b>demo12345</b> / <b>demo12345</b><br>
+          <button type="button" onclick="fillDemo()">Fill Demo Credentials</button>
+        </div>
+        <input id="log-user" placeholder="Username" required>
+        <input id="log-pass" type="password" placeholder="Password" required>
+        <button type="submit">Login to Dashboard</button>
+        <p class="error" id="log-err"></p>
+      </form>
+
+      <!-- Register Form -->
+      <form id="form-register" style="display: none;">
+        <input id="reg-user" placeholder="Choose Username" required>
+        <input id="reg-pass" type="password" placeholder="Choose Password" required>
+        <button type="submit" class="btn-outline">Create Demo Account</button>
+        <p class="error" id="reg-err"></p>
+        <p class="success" id="reg-ok"></p>
+      </form>
+    </div>
   </main>
+
   <footer>Web Technology Lab Project</footer>
+
+  <script>
+    function setTab(tab) {
+      const isLogin = tab === 'login';
+      document.getElementById('tab-log').classList.toggle('active', isLogin);
+      document.getElementById('tab-reg').classList.toggle('active', !isLogin);
+      document.getElementById('form-login').style.display = isLogin ? 'grid' : 'none';
+      document.getElementById('form-register').style.display = isLogin ? 'none' : 'grid';
+    }
+
+    function fillDemo() {
+      document.getElementById('log-user').value = 'demo12345';
+      document.getElementById('log-pass').value = 'demo12345';
+    }
+
+    // Login: sends username & password to Node.js backend
+    document.getElementById('form-login').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        body: JSON.stringify({ username: document.getElementById('log-user').value, password: document.getElementById('log-pass').value })
+      });
+      const data = await res.json();
+      if (res.ok) window.location.href = 'dashboard.html';
+      else document.getElementById('log-err').textContent = data.error || 'Login failed';
+    });
+
+    // Register: adds user to MySQL users table
+    document.getElementById('form-register').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        body: JSON.stringify({ username: document.getElementById('reg-user').value, password: document.getElementById('reg-pass').value })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        document.getElementById('reg-ok').textContent = 'Account created! Switch to Login tab.';
+        document.getElementById('reg-err').textContent = '';
+      } else {
+        document.getElementById('reg-err').textContent = data.error || 'Failed';
+      }
+    });
+  </script>
 </body>
 </html>

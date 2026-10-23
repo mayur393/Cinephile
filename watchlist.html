@@ -3,65 +3,153 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Watchlist - Cinephile Lite</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <meta name="referrer" content="no-referrer">
+  <title>Watchlist – Cinephile Lite</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Sticky top bar with links to the 3 pages -->
   <header>
-    <nav><strong>🎬 Cinephile Lite</strong><a href="index.html">Home</a><a href="diary.html">Diary</a><a class="active" href="watchlist.html">Watchlist</a></nav>
+    <nav>
+      <strong>🎬 Cinephile Lite</strong>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="diary.html">Movie Diary</a>
+      <a class="active" href="watchlist.html">Watchlist</a>
+      <a class="btn-outline btn-sm" href="index.html">Logout</a>
+    </nav>
   </header>
+
   <main>
-    <h1>Watchlist</h1>
-    <!-- Form: one pill-shaped row to add a movie to watch later -->
-    <section>
-      <form id="form" class="pill">
-        <input id="title" aria-label="Movie title" placeholder="Movie to watch..." required maxlength="200">
-        <button>Add</button>
+    <h1 style="margin-bottom: 12px;">Watchlist</h1>
+
+    <!-- Form to Add Movie to Watchlist -->
+    <section class="form-card">
+      <form id="form">
+        <input id="title" placeholder="Movie title" required maxlength="200">
+        <input id="genre" placeholder="Genre (e.g. Sci-Fi / Action)">
+        <input id="poster" placeholder="Paste poster image URL here...">
+        <!-- Live Poster Preview -->
+        <div id="poster-preview" class="poster-preview-box">
+          <img id="preview-img" alt="Poster preview">
+          <span id="preview-status">Poster preview</span>
+        </div>
+        <textarea id="desc" placeholder="Short description"></textarea>
+        <button>Add to Watchlist</button>
+        <p class="error" id="err"></p>
       </form>
-      <p class="error" id="error"></p>
     </section>
-    <!-- The saved movies are drawn here -->
-    <section class="rows" id="list"></section>
+
+    <!-- Watchlist Cards Grid -->
+    <section class="grid" id="list"></section>
   </main>
+
   <footer>Web Technology Lab Project</footer>
+
   <script>
     const list = document.getElementById('list');
-    const error = document.getElementById('error');
+    const f = (id) => document.getElementById(id);
 
-    // Asks the server for all watchlist rows and draws one row for each.
+    // Live preview when URL is pasted into the box
+    function updatePosterPreview(url) {
+      const box = f('poster-preview');
+      const img = f('preview-img');
+      const status = f('preview-status');
+
+      if (!url || !url.trim()) {
+        box.style.display = 'none';
+        img.src = '';
+        return;
+      }
+      box.style.display = 'flex';
+      status.textContent = 'Loading preview...';
+      status.style.color = 'var(--muted)';
+      img.referrerPolicy = 'no-referrer';
+      img.src = url.trim();
+      img.onload = () => {
+        status.textContent = '✓ Poster loaded';
+        status.style.color = '#16a34a';
+      };
+      img.onerror = () => {
+        status.textContent = '⚠ Link cannot be loaded';
+        status.style.color = 'var(--red)';
+      };
+    }
+
+    f('poster').addEventListener('input', () => updatePosterPreview(f('poster').value));
+
+    function makePoster(url, title) {
+      const box = document.createElement('div');
+      box.className = 'poster';
+      const fallback = document.createElement('div');
+      fallback.className = 'poster-fallback';
+      fallback.innerHTML = `<span>🎬</span><strong class="fallback-title">${title || 'Movie'}</strong>`;
+      box.append(fallback);
+
+      if (url && url.trim()) {
+        const img = document.createElement('img');
+        img.referrerPolicy = 'no-referrer';
+        img.src = url.trim();
+        img.onload = () => { fallback.style.display = 'none'; };
+        img.onerror = () => { img.remove(); fallback.style.display = 'flex'; };
+        box.append(img);
+      }
+      return box;
+    }
+
+    // Load all watchlist rows from MySQL and draw cards
     async function load() {
       const res = await fetch('/api/watchlist');
       const movies = await res.json();
-      list.textContent = ''; // clear old rows
+      list.textContent = '';
       movies.forEach((m) => {
-        const row = document.createElement('div');
-        row.className = 'row';
-        const name = document.createElement('span');
-        name.textContent = m.title; // textContent is safe from XSS
+        const card = document.createElement('div');
+        card.className = 'card';
+        const body = document.createElement('div');
+        body.className = 'card-body';
+
+        const name = document.createElement('h3');
+        name.textContent = m.title;
+
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.textContent = m.genre || 'Movie';
+
+        const desc = document.createElement('p');
+        desc.className = 'muted';
+        desc.textContent = m.description || '';
+
+        const acts = document.createElement('div');
+        acts.className = 'card-actions';
+
         const del = document.createElement('button');
+        del.className = 'btn-danger btn-sm';
         del.textContent = 'Remove';
-        // Remove button: DELETE request, then redraw
-        del.addEventListener('click', async () => {
+        del.onclick = async () => {
           await fetch('/api/watchlist/' + m.id, { method: 'DELETE' });
           load();
-        });
-        row.append(name, del);
-        list.append(row);
+        };
+
+        acts.append(del);
+        body.append(name, badge, desc, acts);
+        card.append(makePoster(m.poster_url, m.title), body);
+        list.append(card);
       });
     }
 
-    // When the form is sent: check the title, POST it, redraw.
-    document.getElementById('form').addEventListener('submit', async (e) => {
-      e.preventDefault(); // stop the page reload
-      const title = document.getElementById('title').value.trim();
-      if (!title) { error.textContent = 'Please type a title'; return; }
-      const res = await fetch('/api/watchlist', { method: 'POST', body: JSON.stringify({ title }) });
-      error.textContent = res.ok ? '' : 'Could not save';
-      e.target.reset();
-      load();
-    });
+    // Submit form: POST new watchlist item to MySQL
+    f('form').onsubmit = async (e) => {
+      e.preventDefault();
+      const movie = {
+        title: f('title').value.trim(),
+        genre: f('genre').value.trim(),
+        poster_url: f('poster').value.trim(),
+        description: f('desc').value.trim()
+      };
+      const res = await fetch('/api/watchlist', { method: 'POST', body: JSON.stringify(movie) });
+      if (res.ok) { f('form').reset(); updatePosterPreview(''); load(); }
+      else { f('err').textContent = 'Could not save'; }
+    };
+
     load();
   </script>
 </body>

@@ -1,1 +1,5 @@
 node_modules
+
+# AI Agent Skills (symlinks to master catalog)
+.agents/skills/
+.claude/skills/
