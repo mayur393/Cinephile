@@ -1,6 +1,7 @@
 // Cinephile Lite backend: plain Node http module + MySQL (no Express).
 const http = require('http');
 const fs = require('fs');
+const path = require('path');
 const mysql = require('mysql2/promise'); // the only dependency (MySQL driver)
 
 // Database login. Change here, or set DB_USER / DB_PASS in the terminal.
@@ -71,8 +72,11 @@ async function api(req, res, table, id, body) {
 
 // Runs for every request: serves a page, or sends /api/... to api().
 const server = http.createServer((req, res) => {
-  const [path, table, id] = req.url.split('?')[0].split('/').slice(1).map((p, i) => (i === 0 ? '/' + p : p));
-  if (path === '/api' && (table === 'diary' || table === 'watchlist')) {
+  const url = req.url.split('?')[0]; // drop anything after ?
+  const parts = url.split('/'); // '/api/diary/5' becomes ['', 'api', 'diary', '5']
+  const table = parts[2]; // 'diary' or 'watchlist'
+  const id = parts[3]; // the row number, only used by PUT and DELETE
+  if (parts[1] === 'api' && (table === 'diary' || table === 'watchlist')) {
     let text = '';
     req.on('data', (chunk) => (text += chunk)); // body arrives in pieces
     req.on('end', async () => { // all pieces received
@@ -82,10 +86,10 @@ const server = http.createServer((req, res) => {
     });
     return;
   }
-  const file = PAGES[req.url.split('?')[0]]; // only whitelisted files
+  const file = PAGES[url]; // only whitelisted files
   if (!file) { res.writeHead(404); return res.end('Not found'); }
   res.writeHead(200, { 'Content-Type': file.endsWith('.css') ? 'text/css' : 'text/html' });
-  res.end(fs.readFileSync(file));
+  res.end(fs.readFileSync(path.join(__dirname, file))); // __dirname = folder of server.js, so it works from any folder
 });
 
 // Start: set up the database first, then listen. The page still loads if MySQL is down.
