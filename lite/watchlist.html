@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Watchlist - Cinephile Lite</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Top bar with links to the 3 pages -->
+  <header>
+    <nav><strong>Cinephile Lite</strong><a href="index.html">Home</a><a href="diary.html">Diary</a><a href="watchlist.html">Watchlist</a></nav>
+  </header>
+  <main>
+    <h1>Watchlist</h1>
+    <!-- Form: add a movie to watch later -->
+    <section>
+      <form id="form">
+        <label for="title">Movie title</label>
+        <input id="title" placeholder="Movie title" required maxlength="200">
+        <button>Add</button>
+        <span class="error" id="error"></span>
+      </form>
+    </section>
+    <!-- The saved movies are drawn here -->
+    <section class="cards" id="list"></section>
+  </main>
+  <footer>Web Technology Lab Project</footer>
+  <script>
+    const list = document.getElementById('list');
+    const error = document.getElementById('error');
+
+    // Asks the server for all watchlist rows and draws one card for each.
+    async function load() {
+      const res = await fetch('/api/watchlist');
+      const movies = await res.json();
+      list.textContent = ''; // clear old cards
+      movies.forEach((m) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        const name = document.createElement('h3');
+        name.textContent = m.title; // textContent is safe from XSS
+        const del = document.createElement('button');
+        del.textContent = 'Remove';
+        // Remove button: DELETE request, then redraw
+        del.addEventListener('click', async () => {
+          await fetch('/api/watchlist/' + m.id, { method: 'DELETE' });
+          load();
+        });
+        card.append(name, del);
+        list.append(card);
+      });
+    }
+
+    // When the form is sent: check the title, POST it, redraw.
+    document.getElementById('form').addEventListener('submit', async (e) => {
+      e.preventDefault(); // stop the page reload
+      const title = document.getElementById('title').value.trim();
+      if (!title) { error.textContent = 'Please type a title'; return; }
+      const res = await fetch('/api/watchlist', { method: 'POST', body: JSON.stringify({ title }) });
+      error.textContent = res.ok ? '' : 'Could not save';
+      e.target.reset();
+      load();
+    });
+    load();
+  </script>
+</body>
+</html>
